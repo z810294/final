@@ -1,0 +1,250 @@
+{% extends 'layout.html' %} {% block title %}Blog{% endblock %} {% block content %}
+
+<meta charset="UTF-8">
+<!--中文字-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 手機格式-->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="http://www.bcty365.com/jquery-1.8.3.min.js"></script>
+<script src="https://cdn.socket.io/socket.io-1.0.6.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script>
+/*繪圖板*/
+$(document).ready(function(){
+
+//設定IP
+var ip='192.168.0.4',
+    port='3000';
+var socket = io.connect('http://'+ip+":"+port);
+
+
+
+
+/*繪圖相關設定*/
+//宣告canvas元素c
+var c = document.getElementsByTagName('canvas')[0]; 
+//設定畫布寬高
+c.width=document.getElementById('content').offsetWidth;
+c.height=document.getElementById('content').offsetHeight;
+//確定是否正在畫畫
+var isdrawing =false;
+//getContex()取得在canvas上的畫圖屬性與方法
+var ctx=c.getContext('2d');
+//繪圖物件初始化
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.strokeStyle = '#000000';
+ctx.lineWidth = 1 ;
+//座標相關
+var offset,x,y,new_x,new_y;
+/*畫畫時的動作*/
+//滑鼠在畫布按下時的事件處理
+$(document).on('mousedown','#board',function(e){
+
+    e.preventDefault();
+    //開起可畫圖機制
+    isdrawing=true;
+    //☆計算相對畫布範圍
+    offset=$(e.currentTarget).offset();
+    x = e.pageX - offset.left;
+    y = e.pageY - offset.top;
+    drawLine(x,y,x+1,y+1);
+});
+//滑鼠在畫布上按住移動的事件處理
+$(document).on('mousemove','#board',function(e){
+    e.preventDefault();
+    if(isdrawing)
+    {
+        new_x = e.pageX - offset.left;
+        new_y = e.pageY - offset.top;
+        drawLine(x,y,new_x,new_y);
+        x=new_x;
+        y=new_y;
+    }
+});
+//放開滑鼠鍵
+$(document).on('mouseup','#board',function(e){
+    e.preventDefault();
+    //關閉可畫圖機制
+    isdrawing=false;
+});
+//設定筆尖大小
+$(document).on('change',"#size",function(e){
+    ctx.lineWidth=$(this).val();
+});
+//設定筆尖顏色
+$(document).on('change','#paint-color',function(e){
+    ctx.strokeStyle=$(this).val();
+});
+//畫圖，並將圖傳給其他使用者
+function drawLine(x,y,new_x,new_y)
+    {
+     //繪圖
+     ctx.beginPath();
+     ctx.moveTo(x,y);
+     ctx.lineTo(new_x,new_y);
+     ctx.closePath();
+     ctx.stroke();
+     
+     
+     //結果透過nodeJS傳給使用者
+     var obj = new Object;
+     obj.x=x;
+     obj.y=y;
+     obj.new_x=new_x;
+     obj.new_y=new_y;
+     obj.size = $("#size").val();
+     obj.color = $('#paint-color').val();
+     socket.emit('draw',obj);
+    }
+});
+</script> 
+<div class="navbar navbar-inverse navbar-static-top">
+    <div class="container">
+        <a href="#" class="navbar-brand">NBA</a>
+        <button class="navbar-toggle" data-toggle="collapse" data-target=".navHeaderCollapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="collapse navbar-collapse navHeaderCollapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li id="tabHome" class="tab"><a href="#home" onclick="switchPanel('Home')">Home</a></li>
+                <li id="tabcurry" class="tab"><a href="#" onclick="switchPanel('curry')">curry</a></li>
+                <li id="tabpaint" class="tab"><a href="#" onclick="switchPanel('paint')">塗鴉牆</a></li>
+                <li id="tabblog" class="tab"><a href="#" onclick="switchPanel('blog')">留言板</a></li>
+
+            </ul>
+            </ul>
+        </div>
+    </div>
+</div>
+<!--上面為上面框架  下面為表格 -->
+<div id="panelHome" class="container panel">
+ 
+       
+            <div class="col-lg-4">
+                <img src="https://fbcdn-sphotos-a-a.akamaihd.net/hphotos-ak-xpa1/v/t1.0-9/19090_1587636768158857_3887737690986010824_n.jpg?oh=c4f8251edcc77073ec7597ccf1491aa5&oe=55DA3F08&__gda__=1440847498_aaea7bcace77f6de87177ee8e8a3b334" alt="First slide">
+            </div>
+            <div class="col-lg-4">>
+                <img src="https://fbcdn-sphotos-g-a.akamaihd.net/hphotos-ak-xap1/v/t1.0-9/11203722_1587636758158858_7713739502029542308_n.jpg?oh=78003604dd256bc6c46c9b9cc7f8c09b&oe=55D116EE&__gda__=1440082135_14c3dc3d3776e98594d12683a5c35afd" alt="Second slide">
+            </div>
+            <div class="col-lg-4">>
+                <img src="https://fbcdn-sphotos-e-a.akamaihd.net/hphotos-ak-xat1/v/t1.0-9/11203051_1587636748158859_1469266788425879497_n.jpg?oh=b49f33cb50cbcaabc338e3cfec7bdc1d&oe=55C9B10F&__gda__=1440542215_bd657ab8e720d67c35e60bc6ae61f673" alt="Third slide">
+            </div>
+        </div>
+        
+    <!-- Home頁面的HTML-->
+
+<div id="panelcurry" class="container panel">
+    <div class="col-lg-4">
+        <img src="https://fbcdn-sphotos-c-a.akamaihd.net/hphotos-ak-xpa1/v/t1.0-9/11188228_1587636714825529_5390103566087144920_n.jpg?oh=e3a4700b80892e4505fb0dcf86060fd0&oe=55D83659&__gda__=1440955187_f3db99632d4a4a1b015ac00d950caaf7" alt="Generic placeholder image" style="width: １40px; height: ３40px;">
+        <h2 p class="text-danger">stephen curry</p></h2>
+        <p><a class="btn btn-primary" href="http://zh.wikipedia.org/wiki/%E6%96%AF%E8%92%82%E8%8A%AC%C2%B7%E7%A7%91%E9%87%8C" role="button">維基百科 &raquo;</a></p>
+    </div>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/vgKfrQZqeSQ" frameborder="0" allowfullscreen></iframe>
+    <style>
+    
+    th {
+        border: 1px solid black;
+        text-align: center;
+    }
+    
+    table {
+        width: 50%;
+    }
+    
+    th {
+        height: 100px;
+        border: 1px solid blue;
+    }
+    
+    td {
+        text-align: center;
+        border: 1px solid blue;
+    }
+
+    </style>
+
+  
+        <table>
+            <tr>
+                <th>名字</th>
+                <th>curry</th>
+            </tr>
+            <tr>
+                <td>身高</td>
+                <td>190</td>
+            </tr>
+            <tr>
+                <td>體重</td>
+                <td>80</td>
+            </tr>
+            <tr>
+                <td>位置</td>
+                <td>後衛</td>
+            </tr>
+        </table>
+</div>
+<div id="panelpaint" class="container panel">
+
+
+
+<div id="PartA">
+    <div id="content">
+    <canvas id="board"></canvas>
+    </div>
+</div>
+
+<div id="PartB">
+        <div id="color">
+    畫筆顏色<input id="paint-color" type="color" />
+    <br />
+    </div>
+    <div id="sizecol">
+     筆頭大小:
+                                <select id="size">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                </select> 
+    </div>
+</div>
+    
+</div>
+<div id="panelblog" class="container panel">
+    <h1>留言板</h1>
+    <p>你有 <strong>{{ posts.length }}</strong> 留言!</p>
+    <p><a href="/post/new">新增留言</a></p>
+    <ul id="posts">
+        {% for post in posts %}
+        <li>
+            <h2>{{ post.title }}</h2>
+            <p><a href="/post/{{ post.id }}">檢視留言</a></p>
+        </li>
+        {% endfor %}
+    </ul>
+
+</div>
+
+<script type="text/javascript">
+function switchPanel(name) {
+    $(".panel").css("display", "none");
+    $("#panel" + name).css("display", "block");
+    $(".tab").removeClass("active");
+    $("#tab" + name).addClass("active");
+}
+
+$(document).ready(function() {
+    switchPanel('Home');
+});
+</script>
+
+
+{% endblock %}
